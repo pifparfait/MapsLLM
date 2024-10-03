@@ -6,6 +6,7 @@ from mesa.visualization.modules import CanvasGrid, ChartModule
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import Slider
 from llm_connection import LLM_executor
+from termcolor import colored
 
 
 class TalkingAgent(Agent):
@@ -28,7 +29,7 @@ class TalkingAgent(Agent):
             elif 'NEGATIVE' in deci.upper():
                 self.group = 'negative'
             elif 'NEUTRAL' in deci.upper():
-                self.group = 'negative'
+                self.group = 'neutral'
 
         def log_info(info_msg, llm_answer):
             print('--------'+info_msg.upper()+'--------')
@@ -51,12 +52,24 @@ class TalkingAgent(Agent):
                     opinion = self.model._llm_executor.get_answer(prompt)
                     log_info('agent {} is proposing a negative opinion'.format(other_agent.unique_id), opinion)
 
-                prompt = 'You are a {} agent deciding on this policy: '.format(self.unique_id) + self.policy + '. Here is an opinion other person says to you: ' + opinion + '. Answer with POSITIVE, NEGATIVE or NEUTRAL to decide your vote on the policy.'
+                prompt = 'You are a {} agent deciding on this policy: '.format(self.group) + self.policy + '. Here is an opinion other person says to you: ' + opinion + '. Answer with POSITIVE, NEGATIVE or NEUTRAL to decide your vote on the policy. Try to maintain your opinion unless presented with a sufficiently strong argument.' 
                 deci = self.model._llm_executor.get_answer(prompt)
-                
-                log_info('agent {} has made a decision'.format(self.unique_id), deci)
-
+                temp_group = self.group
                 check_and_change(deci)
+                # Color
+                ag_color = 'red'
+                if self.group == "positive":
+                    ag_color = "green"
+                elif self.group == "negative":
+                    ag_color = "red"
+                else:
+                    ag_color = "blue"
+
+                log_info('agent {} {} has made a decision'.format(self.unique_id, temp_group), colored(deci,ag_color))
+                #print(colored('hello', 'red'), colored('world', 'green'))
+                
+
+                
 
         if self.scenario == 2:
             if self.group != 'negative':
@@ -75,12 +88,21 @@ class TalkingAgent(Agent):
                     opinion = self.model._llm_executor.get_answer(prompt)
                     log_info('agent {} is proposing a neutral opinion'.format(other_agent.unique_id), opinion)
 
-                prompt = 'You are a {} agent deciding on this policy: '.format(self.unique_id) + self.policy + '. Here is an opinion other person says to you: ' + opinion + '. Answer with POSITIVE, NEGATIVE or NEUTRAL to decide your vote on the policy.'
+                prompt = 'You are a {} agent deciding on this policy: '.format(self.group) + self.policy + '. Here is an opinion other person says to you: ' + opinion + '. Answer with POSITIVE, NEGATIVE or NEUTRAL to decide your vote on the policy. Try to maintain your opinion unless presented with a sufficiently strong argument.'
                 deci = self.model._llm_executor.get_answer(prompt)
                 
-                log_info('agent {} has made a decision'.format(self.unique_id), deci)
-
+                temp_group = self.group
                 check_and_change(deci)
+                # Color
+                ag_color = 'red'
+                if self.group == "positive":
+                    ag_color = "green"
+                elif self.group == "negative":
+                    ag_color = "red"
+                else:
+                    ag_color = "blue"
+
+                log_info('agent {} {} has made a decision'.format(self.unique_id, temp_group), colored(deci,ag_color))
 
         if self.scenario == 3:
             if self.group != 'positive':
@@ -99,12 +121,21 @@ class TalkingAgent(Agent):
                     opinion = self.model._llm_executor.get_answer(prompt)
                     log_info('agent {} is proposing a neutral opinion'.format(other_agent.unique_id), opinion)
 
-                prompt = 'You are a {} agent deciding on this policy: '.format(self.unique_id) + self.policy + '. Here is an opinion other person says to you: ' + opinion + '. Answer with POSITIVE, NEGATIVE or NEUTRAL to decide your vote on the policy.'
+                prompt = 'You are a {} agent deciding on this policy: '.format(self.group) + self.policy + '. Here is an opinion other person says to you: ' + opinion + '. Answer with POSITIVE, NEGATIVE or NEUTRAL to decide your vote on the policy. '
                 deci = self.model._llm_executor.get_answer(prompt)
                 
-                log_info('agent {} has made a decision'.format(self.unique_id), deci)
-
+                temp_group = self.group
                 check_and_change(deci)
+                # Color
+                ag_color = 'red'
+                if self.group == "positive":
+                    ag_color = "green"
+                elif self.group == "negative":
+                    ag_color = "red"
+                else:
+                    ag_color = "blue"
+
+                log_info('agent {} {} has made a decision'.format(self.unique_id, temp_group), colored(deci,ag_color))
 
         if self.scenario == 4:
                 other_agent = self.random.choice(self.model.schedule.agents)
@@ -125,17 +156,28 @@ class TalkingAgent(Agent):
                     opinion = self.model._llm_executor.get_answer(prompt)
                     log_info('agent {} is proposing a positive opinion'.format(other_agent.unique_id), opinion)
 
-                prompt = 'You are a {} agent deciding on this policy: '.format(self.unique_id) + self.policy + '. Here is an opinion other person says to you: ' + opinion + '. Answer with POSITIVE, NEGATIVE or NEUTRAL to decide your vote on the policy.'
+                prompt = 'You are a {} agent deciding on this policy: '.format(self.group) + self.policy + '. Here is an opinion other person says to you: ' + opinion + '. Answer with POSITIVE, NEGATIVE or NEUTRAL to decide your vote on the policy.'
                 deci = self.model._llm_executor.get_answer(prompt)
                 
-                log_info('agent {} has made a decision'.format(self.unique_id), deci)
-
+                temp_group = self.group
                 check_and_change(deci)
+                # Color
+                ag_color = 'red'
+                if self.group == "positive":
+                    ag_color = "green"
+                elif self.group == "negative":
+                    ag_color = "red"
+                else:
+                    ag_color = "blue"
+
+                log_info('agent {} {} has made a decision'.format(self.unique_id, temp_group), colored(deci,ag_color))
 
 
 class TalkingModel(Model):
     def __init__(self, Scenario, Np, Nn, Nneu, policy, positive, negative):
         super().__init__()
+
+        self.agent_index = 0
 
         self._llm_executor = LLM_executor()
 
@@ -176,8 +218,13 @@ class TalkingModel(Model):
         self.datacollector.collect(self)
 
     def step(self):
+        if self.agent_index == self.num_agents :
+            self.agent_index = 0
+
+        agent = self.schedule.agents[self.agent_index]
+        agent.step()
         self.datacollector.collect(self)
-        self.schedule.step()
+        self.agent_index = self.agent_index + 1
 
 
 def agent_portrayal(agent):
@@ -211,7 +258,7 @@ class TalkingAgentsABM:
 
         self.server = ModularServer(TalkingModel,
                                     [grid, chart],
-                                    "Talking Agents Model",
+                                    "Collaborative Policy Decision-Making with Agents",
                                     model_params)
     
     def get_abm_server(self):
