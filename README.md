@@ -36,6 +36,10 @@ This repository contains the source code for simulating conversations between ag
 3. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
+4. **Pull the necessary Ollama distribution (required for LLM)**:
+   ```bash
+   ollama pull qwen2.5:0.5b
+   
 ## Usage
 
 1. **Run the Python script to simulate agents' discussions**:
